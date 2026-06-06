@@ -1,43 +1,44 @@
 name: Update KR Block List
 
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: "0 0 * * *"
+workflow_dispatch:
+schedule:
+- cron: "0 0 * * *"
 
 permissions:
-  contents: write
+contents: write
 
 jobs:
-  update:
-    runs-on: ubuntu-latest
+update:
+runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+```
+steps:
+  - name: Checkout Repository
+    uses: actions/checkout@v4
 
-      - name: Download Source
-        run: |
-          curl -L \
-          https://raw.githubusercontent.com/Chakfang/blocked-sites-in-south-korea/main/list.txt \
-          -o source.txt
-          if [ ! -f source.txt ] || [ ! -s source.txt ]; then
-            echo "Failed to download source file"
-            exit 1
-          fi
+  - name: Download Source List
+    run: |
+      curl -L \
+        https://raw.githubusercontent.com/Chakfang/blocked-sites-in-south-korea/main/list.txt \
+        -o source.txt
 
-      - name: Convert To Text Format
-        run: |
-          grep -v '^#' source.txt | grep -v '^$' > block-list.txt
+  - name: Generate Clash Rule File
+    run: |
+      grep -v '^#' source.txt | \
+      grep -v '^$' | \
+      sed 's/^/DOMAIN-SUFFIX,/' \
+      > clash.txt
 
-      - name: Commit Changes
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+  - name: Commit Changes
+    run: |
+      git config --global user.name "github-actions"
+      git config --global user.email "github-actions@github.com"
 
-          git add block-list.txt
+      git add clash.txt
 
-          if ! git diff --cached --quiet; then
-            git commit -m "update block list"
-            git push
-          fi
+      if ! git diff --cached --quiet; then
+        git commit -m "Update KR block rules"
+        git push
+      fi
+```
