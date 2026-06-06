@@ -17,7 +17,7 @@ jobs:
 
       - name: Download Source List
         run: |
-          curl -L "https://github.com/Chakfang/BLOCK-RULE/blob/main/kr.txt" -o source.txt
+          curl -L "https://raw.githubusercontent.com/Chakfang/blocked-sites-in-south-korea/main/list.txt" -o source.txt
 
       - name: Generate Clash Rule File
         run: |
