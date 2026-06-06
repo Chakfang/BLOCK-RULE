@@ -3,7 +3,7 @@ name: Update KR Block List
 on:
 workflow_dispatch:
 schedule:
-- cron: "0 0 * * *"
+- cron: '0 0 * * *'
 
 permissions:
 contents: write
@@ -19,16 +19,11 @@ steps:
 
   - name: Download Source List
     run: |
-      curl -L \
-        https://raw.githubusercontent.com/Chakfang/blocked-sites-in-south-korea/main/list.txt \
-        -o source.txt
+      curl -L "https://raw.githubusercontent.com/Chakfang/blocked-sites-in-south-korea/main/list.txt" -o source.txt
 
   - name: Generate Clash Rule File
     run: |
-      grep -v '^#' source.txt | \
-      grep -v '^$' | \
-      sed 's/^/DOMAIN-SUFFIX,/' \
-      > clash.txt
+      grep -v '^#' source.txt | grep -v '^$' | sed 's/^/DOMAIN-SUFFIX,/' > clash.txt
 
   - name: Commit Changes
     run: |
