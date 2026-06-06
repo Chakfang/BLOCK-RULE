@@ -26,22 +26,18 @@ jobs:
             exit 1
           fi
 
-      - name: Convert To Clash Format
+      - name: Convert To Text Format
         run: |
-          echo "payload:" > clash.yaml
-          grep -v '^#' source.txt | grep -v '^$' | while read domain
-          do
-            echo "  - DOMAIN-SUFFIX,$domain" >> clash.yaml
-          done
+          grep -v '^#' source.txt | grep -v '^$' > block-list.txt
 
       - name: Commit Changes
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          git add clash.yaml
+          git add block-list.txt
 
           if ! git diff --cached --quiet; then
-            git commit -m "update clash rules"
+            git commit -m "update block list"
             git push
           fi
