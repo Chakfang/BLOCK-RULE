@@ -1,43 +1,47 @@
 name: Update KR Block List
 
 on:
-workflow_dispatch:
-schedule:
-- cron: "0 0 * * *"
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
 
 permissions:
-contents: write
+  contents: write
 
 jobs:
-update:
-runs-on: ubuntu-latest
+  update:
+    runs-on: ubuntu-latest
 
-steps:
-  - name: Checkout
-    uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  - name: Download Source
-    run: |
-      curl -L \
-      https://raw.githubusercontent.com/Chakfang/blocked-sites-in-south-korea/main/list.txt \
-      -o source.txt
+      - name: Download Source
+        run: |
+          curl -L \
+          https://raw.githubusercontent.com/Chakfang/blocked-sites-in-south-korea/main/list.txt \
+          -o source.txt
+          if [ ! -f source.txt ] || [ ! -s source.txt ]; then
+            echo "Failed to download source file"
+            exit 1
+          fi
 
-  - name: Convert To Clash Format
-    run: |
-      echo "payload:" > clash.yaml
-      grep -v '^#' source.txt | grep -v '^$' | while read domain
-      do
-        echo "  - DOMAIN-SUFFIX,$domain" >> clash.yaml
-      done
+      - name: Convert To Clash Format
+        run: |
+          echo "payload:" > clash.yaml
+          grep -v '^#' source.txt | grep -v '^$' | while read domain
+          do
+            echo "  - DOMAIN-SUFFIX,$domain" >> clash.yaml
+          done
 
-  - name: Commit Changes
-    run: |
-      git config user.name github-actions
-      git config user.email github-actions@github.com
+      - name: Commit Changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
 
-      git add clash.yaml
+          git add clash.yaml
 
-      if ! git diff --cached --quiet; then
-        git commit -m "update clash rules"
-        git push
-      fi
+          if ! git diff --cached --quiet; then
+            git commit -m "update clash rules"
+            git push
+          fi
