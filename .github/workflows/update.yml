@@ -4,6 +4,16 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 0 * * *'
+  push:
+    branches:
+      - main
+    paths:
+      - 'list.txt'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'list.txt'
 
 permissions:
   contents: write
