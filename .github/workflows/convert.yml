@@ -1,0 +1,70 @@
+name: Generate SRS Rule Set for Karing
+
+on:
+  push:
+    paths:
+      - 'list.txt'
+      - 'convert_to_srs.py'
+  workflow_dispatch:
+  schedule:
+    # 每天 UTC 时间 00:00 运行
+    - cron: '0 0 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Convert list.txt to JSON format
+        run: |
+          python convert_to_srs.py list.txt rules.json
+      
+      - name: Download sing-box binary
+        run: |
+          # 下载最新版本的 sing-box
+          VERSION="1.12.12"
+          wget -q --show-progress https://github.com/SagerNet/sing-box/releases/download/v${VERSION}/sing-box-${VERSION}-linux-amd64.tar.gz -O sing-box.tar.gz
+          tar -xzf sing-box.tar.gz
+          chmod +x sing-box-${VERSION}-linux-amd64/sing-box
+          mv sing-box-${VERSION}-linux-amd64/sing-box ./sing-box
+          ./sing-box version
+      
+      - name: Compile JSON to SRS format
+        run: |
+          ./sing-box rule-set compile -o rules.srs rules.json
+      
+      - name: Check if rules.srs changed
+        id: check_changes
+        run: |
+          if git diff --quiet rules.srs 2>/dev/null; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.changed == 'true' || !contains(github.event_name, 'pull_request')
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add rules.srs rules.json
+          git commit -m "Auto: Update rules.srs from list.txt" || true
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload SRS as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: rules-srs
+          path: rules.srs
